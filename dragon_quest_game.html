@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ドラゴンクエスト風RPG</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(to bottom, #1a1a2e, #0f0f1e);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: #2a2a3e;
+            border: 3px solid #fff;
+            border-radius: 10px;
+            padding: 20px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .game-title {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-screen {
+            background: #1a1a2e;
+            border: 2px solid #fff;
+            border-radius: 5px;
+            padding: 20px;
+            min-height: 300px;
+            margin-bottom: 20px;
+        }
+
+        .status-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .character-status {
+            background: #3a3a4e;
+            border: 2px solid #fff;
+            border-radius: 5px;
+            padding: 15px;
+        }
+
+        .character-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #4fc3f7;
+        }
+
+        .status-bar {
+            margin-bottom: 8px;
+        }
+
+        .status-label {
+            display: inline-block;
+            width: 40px;
+            font-size: 14px;
+        }
+
+        .bar-container {
+            display: inline-block;
+            width: 150px;
+            height: 20px;
+            background: #1a1a2e;
+            border: 1px solid #fff;
+            position: relative;
+            margin-left: 10px;
+        }
+
+        .bar-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .hp-bar { background: linear-gradient(to right, #ff4444, #ff6666); }
+        .mp-bar { background: linear-gradient(to right, #4444ff, #6666ff); }
+
+        .bar-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .message-box {
+            background: #1a1a2e;
+            border: 2px solid #fff;
+            border-radius: 5px;
+            padding: 15px;
+            min-height: 100px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .command-panel {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .command-btn {
+            background: #4a4a6e;
+            border: 2px solid #fff;
+            color: white;
+            padding: 15px;
+            font-size: 16px;
+            font-family: inherit;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .command-btn:hover {
+            background: #5a5a7e;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .command-btn:active {
+            transform: translateY(0);
+        }
+
+        .command-btn:disabled {
+            background: #2a2a3e;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .enemy-sprite {
+            text-align: center;
+            font-size: 80px;
+            margin: 20px 0;
+            animation: float 2s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .damage-text {
+            color: #ff4444;
+            font-size: 24px;
+            font-weight: bold;
+            animation: damage 0.5s ease-out;
+        }
+
+        @keyframes damage {
+            0% { transform: scale(1.5); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
+        .heal-text {
+            color: #44ff44;
+            font-size: 24px;
+            font-weight: bold;
+            animation: heal 0.5s ease-out;
+        }
+
+        @keyframes heal {
+            0% { transform: scale(1.5); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
+        .victory-text {
+            color: #ffd700;
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+            animation: victory 1s ease-out;
+        }
+
+        @keyframes victory {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .game-over-text {
+            color: #ff4444;
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+            animation: gameOver 1s ease-out;
+        }
+
+        @keyframes gameOver {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .item-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .item-btn {
+            background: #3a5a4e;
+            border: 2px solid #fff;
+            color: white;
+            padding: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .item-btn:hover {
+            background: #4a6a5e;
+        }
+
+        .item-count {
+            color: #ffd700;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1 class="game-title">⚔️ ドラゴンクエスト風RPG ⚔️</h1>
+        
+        <div class="game-screen">
+            <div class="enemy-sprite" id="enemySprite"></div>
+        </div>
+
+        <div class="status-panel">
+            <div class="character-status">
+                <div class="character-name">勇者</div>
+                <div class="status-bar">
+                    <span class="status-label">HP:</span>
+                    <div class="bar-container">
+                        <div class="bar-fill hp-bar" id="playerHpBar"></div>
+                        <div class="bar-text" id="playerHpText"></div>
+                    </div>
+                </div>
+                <div class="status-bar">
+                    <span class="status-label">MP:</span>
+                    <div class="bar-container">
+                        <div class="bar-fill mp-bar" id="playerMpBar"></div>
+                        <div class="bar-text" id="playerMpText"></div>
+                    </div>
+                </div>
+                <div style="margin-top: 10px; font-size: 14px;">
+                    レベル: <span id="playerLevel">1</span> | 
+                    経験値: <span id="playerExp">0</span>
+                </div>
+            </div>
+
+            <div class="character-status">
+                <div class="character-name" id="enemyName">モンスター</div>
+                <div class="status-bar">
+                    <span class="status-label">HP:</span>
+                    <div class="bar-container">
+                        <div class="bar-fill hp-bar" id="enemyHpBar"></div>
+                        <div class="bar-text" id="enemyHpText"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="message-box" id="messageBox">
+            モンスターが現れた！
+        </div>
+
+        <div class="command-panel" id="commandPanel">
+            <button class="command-btn" onclick="playerAttack()">こうげき</button>
+            <button class="command-btn" onclick="playerMagic()">まほう (MP: 5)</button>
+            <button class="command-btn" onclick="showItems()">どうぐ</button>
+            <button class="command-btn" onclick="playerDefend()">ぼうぎょ</button>
+        </div>
+
+        <div class="command-panel item-list" id="itemPanel" style="display: none;">
+            <button class="item-btn" onclick="useItem('yakusou')">
+                やくそう <span class="item-count" id="yakusouCount">3</span>
+            </button>
+            <button class="item-btn" onclick="useItem('maryoku')">
+                まりょくのみず <span class="item-count" id="maryokuCount">2</span>
+            </button>
+            <button class="item-btn" onclick="useItem('elixir')">
+                エリクサー <span class="item-count" id="elixirCount">1</span>
+            </button>
+            <button class="item-btn" onclick="hideItems()">もどる</button>
+        </div>
+    </div>
+
+    <script>
+        // ゲームの状態管理
+        let gameState = {
+            player: {
+                name: '勇者',
+                level: 1,
+                exp: 0,
+                hp: 100,
+                maxHp: 100,
+                mp: 30,
+                maxMp: 30,
+                attack: 20,
+                defense: 10,
+                isDefending: false
+            },
+            enemy: null,
+            currentEnemyIndex: 0,
+            battleActive: false,
+            items: {
+                yakusou: 3,
+                maryoku: 2,
+                elixir: 1
+            }
+        };
+
+        // 敵のデータ
+        const enemies = [
+            { name: 'スライム', emoji: '🟦', hp: 30, maxHp: 30, attack: 10, exp: 10, gold: 5 },
+            { name: 'ゴブリン', emoji: '👺', hp: 50, maxHp: 50, attack: 15, exp: 20, gold: 10 },
+            { name: 'オーク', emoji: '👹', hp: 80, maxHp: 80, attack: 25, exp: 35, gold: 20 },
+            { name: 'ドラゴン', emoji: '🐉', hp: 150, maxHp: 150, attack: 40, exp: 100, gold: 50 },
+            { name: '魔王', emoji: '👿', hp: 300, maxHp: 300, attack: 50, exp: 500, gold: 200 }
+        ];
+
+        // ゲーム初期化
+        function initGame() {
+            spawnEnemy();
+            updateDisplay();
+        }
+
+        // 敵を出現させる
+        function spawnEnemy() {
+            const enemyData = enemies[gameState.currentEnemyIndex % enemies.length];
+            gameState.enemy = { ...enemyData };
+            gameState.battleActive = true;
+            gameState.player.isDefending = false;
+            
+            document.getElementById('enemySprite').textContent = enemyData.emoji;
+            document.getElementById('enemyName').textContent = enemyData.name;
+            showMessage(`${enemyData.name}が現れた！`);
+            updateDisplay();
+        }
+
+        // 表示を更新
+        function updateDisplay() {
+            // プレイヤーのHP/MP
+            const playerHpPercent = (gameState.player.hp / gameState.player.maxHp) * 100;
+            const playerMpPercent = (gameState.player.mp / gameState.player.maxMp) * 100;
+            
+            document.getElementById('playerHpBar').style.width = playerHpPercent + '%';
+            document.getElementById('playerHpText').textContent = `${gameState.player.hp}/${gameState.player.maxHp}`;
+            document.getElementById('playerMpBar').style.width = playerMpPercent + '%';
+            document.getElementById('playerMpText').textContent = `${gameState.player.mp}/${gameState.player.maxMp}`;
+            document.getElementById('playerLevel').textContent = gameState.player.level;
+            document.getElementById('playerExp').textContent = gameState.player.exp;
+            
+            // 敵のHP
+            if (gameState.enemy) {
+                const enemyHpPercent = (gameState.enemy.hp / gameState.enemy.maxHp) * 100;
+                document.getElementById('enemyHpBar').style.width = enemyHpPercent + '%';
+                document.getElementById('enemyHpText').textContent = `${gameState.enemy.hp}/${gameState.enemy.maxHp}`;
+            }
+            
+            // アイテム数を更新
+            document.getElementById('yakusouCount').textContent = gameState.items.yakusou;
+            document.getElementById('maryokuCount').textContent = gameState.items.maryoku;
+            document.getElementById('elixirCount').textContent = gameState.items.elixir;
+        }
+
+        // メッセージ表示
+        function showMessage(message, className = '') {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.innerHTML = `<div class="${className}">${message}</div>`;
+        }
+
+        // コマンドボタンの有効/無効切り替え
+        function setCommandsEnabled(enabled) {
+            const buttons = document.querySelectorAll('.command-btn');
+            buttons.forEach(btn => btn.disabled = !enabled);
+        }
+
+        // プレイヤーの攻撃
+        function playerAttack() {
+            if (!gameState.battleActive) return;
+            
+            setCommandsEnabled(false);
+            const damage = Math.floor(gameState.player.attack + Math.random() * 10);
+            gameState.enemy.hp = Math.max(0, gameState.enemy.hp - damage);
+            
+            showMessage(`勇者の攻撃！ ${gameState.enemy.name}に ${damage} のダメージ！`, 'damage-text');
+            updateDisplay();
+            
+            if (gameState.enemy.hp <= 0) {
+                victory();
+            } else {
+                setTimeout(() => enemyTurn(), 1500);
+            }
+        }
+
+        // プレイヤーの魔法
+        function playerMagic() {
+            if (!gameState.battleActive || gameState.player.mp < 5) {
+                showMessage('MPが足りない！');
+                return;
+            }
+            
+            setCommandsEnabled(false);
+            gameState.player.mp -= 5;
+            const damage = Math.floor(gameState.player.attack * 1.5 + Math.random() * 15);
+            gameState.enemy.hp = Math.max(0, gameState.enemy.hp - damage);
+            
+            showMessage(`勇者はメラを唱えた！ ${gameState.enemy.name}に ${damage} のダメージ！`, 'damage-text');
+            updateDisplay();
+            
+            if (gameState.enemy.hp <= 0) {
+                victory();
+            } else {
+                setTimeout(() => enemyTurn(), 1500);
+            }
+        }
+
+        // プレイヤーの防御
+        function playerDefend() {
+            if (!gameState.battleActive) return;
+            
+            setCommandsEnabled(false);
+            gameState.player.isDefending = true;
+            showMessage('勇者は身を守っている！');
+            
+            setTimeout(() => enemyTurn(), 1500);
+        }
+
+        // アイテムメニュー表示
+        function showItems() {
+            document.getElementById('commandPanel').style.display = 'none';
+            document.getElementById('itemPanel').style.display = 'grid';
+        }
+
+        // アイテムメニュー非表示
+        function hideItems() {
+            document.getElementById('itemPanel').style.display = 'none';
+            document.getElementById('commandPanel').style.display = 'grid';
+        }
+
+        // アイテム使用
+        function useItem(itemType) {
+            if (!gameState.battleActive) return;
+            
+            if (itemType === 'yakusou' && gameState.items.yakusou > 0) {
+                gameState.items.yakusou--;
+                const healAmount = 30;
+                gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + healAmount);
+                showMessage(`やくそうを使った！ HPが ${healAmount} 回復した！`, 'heal-text');
+                hideItems();
+                setCommandsEnabled(false);
+                updateDisplay();
+                setTimeout(() => enemyTurn(), 1500);
+            } else if (itemType === 'maryoku' && gameState.items.maryoku > 0) {
+                gameState.items.maryoku--;
+                const mpRestore = 15;
+                gameState.player.mp = Math.min(gameState.player.maxMp, gameState.player.mp + mpRestore);
+                showMessage(`まりょくのみずを使った！ MPが ${mpRestore} 回復した！`, 'heal-text');
+                hideItems();
+                setCommandsEnabled(false);
+                updateDisplay();
+                setTimeout(() => enemyTurn(), 1500);
+            } else if (itemType === 'elixir' && gameState.items.elixir > 0) {
+                gameState.items.elixir--;
+                gameState.player.hp = gameState.player.maxHp;
+                gameState.player.mp = gameState.player.maxMp;
+                showMessage('エリクサーを使った！ HP・MPが全回復した！', 'heal-text');
+                hideItems();
+                setCommandsEnabled(false);
+                updateDisplay();
+                setTimeout(() => enemyTurn(), 1500);
+            } else {
+                showMessage('そのアイテムは持っていない！');
+            }
+        }
+
+        // 敵のターン
+        function enemyTurn() {
+            if (!gameState.battleActive) return;
+            
+            let damage = Math.floor(gameState.enemy.attack + Math.random() * 10);
+            
+            if (gameState.player.isDefending) {
+                damage = Math.floor(damage * 0.5);
+                gameState.player.isDefending = false;
+            }
+            
+            gameState.player.hp = Math.max(0, gameState.player.hp - damage);
+            
+            showMessage(`${gameState.enemy.name}の攻撃！ 勇者に ${damage} のダメージ！`, 'damage-text');
+            updateDisplay();
+            
+            if (gameState.player.hp <= 0) {
+                gameOver();
+            } else {
+                setCommandsEnabled(true);
+            }
+        }
+
+        // 勝利処理
+        function victory() {
+            gameState.battleActive = false;
+            const expGained = gameState.enemy.exp;
+            const goldGained = gameState.enemy.gold;
+            
+            gameState.player.exp += expGained;
+            
+            showMessage(
+                `<div class="victory-text">勝利！</div>
+                ${expGained} の経験値と ${goldGained} ゴールドを獲得した！`,
+                ''
+            );
+            
+            // レベルアップチェック
+            if (gameState.player.exp >= gameState.player.level * 50) {
+                levelUp();
+            }
+            
+            // アイテム補充（ランダム）
+            if (Math.random() < 0.3) {
+                gameState.items.yakusou++;
+                setTimeout(() => showMessage('やくそうを手に入れた！'), 2000);
+            }
+            
+            gameState.currentEnemyIndex++;
+            
+            setTimeout(() => {
+                showMessage('次の敵を探している...');
+                setTimeout(() => spawnEnemy(), 2000);
+            }, 3000);
+        }
+
+        // レベルアップ
+        function levelUp() {
+            gameState.player.level++;
+            gameState.player.maxHp += 20;
+            gameState.player.maxMp += 10;
+            gameState.player.attack += 5;
+            gameState.player.defense += 3;
+            gameState.player.hp = gameState.player.maxHp;
+            gameState.player.mp = gameState.player.maxMp;
+            
+            setTimeout(() => {
+                showMessage(`レベルアップ！ レベル ${gameState.player.level} になった！`);
+            }, 1500);
+        }
+
+        // ゲームオーバー
+        function gameOver() {
+            gameState.battleActive = false;
+            showMessage(
+                `<div class="game-over-text">ゲームオーバー</div>
+                勇者は力尽きた...`,
+                ''
+            );
+            
+            setCommandsEnabled(false);
+            
+            setTimeout(() => {
+                if (confirm('もう一度挑戦しますか？')) {
+                    // ゲームをリセット
+                    gameState.player.hp = gameState.player.maxHp;
+                    gameState.player.mp = gameState.player.maxMp;
+                    gameState.player.exp = Math.floor(gameState.player.exp * 0.5);
+                    gameState.currentEnemyIndex = Math.max(0, gameState.currentEnemyIndex - 2);
+                    gameState.items.yakusou = 3;
+                    gameState.items.maryoku = 2;
+                    gameState.items.elixir = 1;
+                    spawnEnemy();
+                    setCommandsEnabled(true);
+                }
+            }, 2000);
+        }
+
+        // ゲーム開始
+        window.onload = initGame;
+    </script>
+</body>
+</html>
